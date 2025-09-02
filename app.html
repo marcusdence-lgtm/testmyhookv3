@@ -11,13 +11,16 @@
 
   :root { --bg:#fafafa; --card:#fff; --ink:#222; --muted:#666; --brand:#ff9f43; --line:#eee; }
   body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--ink); }
+
   header {
-  padding: 28px 22px 8px;
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  box-sizing: border-box; /* keeps header aligned with .grid */
-}
+    padding-top: 28px;
+    padding-bottom: 8px;
+    padding-inline: 22px;      /* matches .grid gutters */
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
 
   h1 { margin:0 0 6px; font-size:28px; }
   p.lead { margin:8px 0 0; color:var(--muted); }
@@ -26,10 +29,15 @@
     display: grid;
     grid-template-columns: 1fr 340px;
     gap: 22px;
+
     width: 100%;
-    max-width: 1100px;   /* match header */
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 18px 22px 40px;
+
+    padding-top: 18px;
+    padding-bottom: 40px;
+    padding-inline: 22px;      /* matches header gutters */
+
     box-sizing: border-box;
   }
 
@@ -78,15 +86,14 @@
     aside { grid-area: aside; }
   }
 
-  /* Match header/grid gutters on small phones */
+  /* Exact matching gutters on small phones (safe areas) */
   @media (max-width: 480px) {
     header, .grid {
-      padding-left: 14px;
-      padding-right: 14px;
+      padding-inline-start: max(14px, env(safe-area-inset-left));
+      padding-inline-end:   max(14px, env(safe-area-inset-right));
     }
   }
-</style>
-
+  </style>
 </head>
 <body>
   <header>
@@ -135,13 +142,12 @@
       <section class="card">
         <div class="vstack-lg">
           <h3 style="margin:0">Account</h3>
-		<p class="small" style="margin:6px 0 12px;">
- 		 Accounts are only used so you can revisit your hooks and see feedback later.
-		</p>
-		<div id="signedOut">
-
+          <p class="small" style="margin:6px 0 12px;">
+            Accounts are only used so you can revisit your hooks and see feedback later.
+          </p>
+          <div id="signedOut">
             <input id="email" type="email" placeholder="Email" />
-            <input id="password" type="password" placeholder="Password" style="margin-bottom:12px;" /> 
+            <input id="password" type="password" placeholder="Password" style="margin-bottom:12px;" />
             <div class="row">
               <button id="signInBtn" class="btn">Sign in</button>
               <button id="signUpBtn" class="btn">Sign up</button>
@@ -448,25 +454,32 @@
       });
     }
 
+    /* NEW: hide inputs when logged out; show CTA instead */
     async function reloadVoteList() {
       const { data: { user } } = await supabase.auth.getUser();
+      const loggedIn = !!user;
 
       const { data: rows, error } = await supabase
         .from('hooks')
         .select('id, user_id, hook_text, image_url')
         .order('created_at', { ascending:false })
         .limit(100);
-      if (error) { voteList.innerHTML = `<div class="muted">${escapeHtml(error.message)}</div>`; return; }
+
+      if (error) {
+        voteList.innerHTML = `<div class="muted">${escapeHtml(error.message)}</div>`;
+        return;
+      }
 
       let filtered = rows || [];
 
-      if (user) {
+      if (loggedIn) {
         filtered = filtered.filter(h => h.user_id !== user.id);
 
         const { data: voted, error: vErr } = await supabase
           .from('votes')
           .select('hook_id')
           .eq('voter_id', user.id);
+
         if (!vErr && voted) {
           const votedSet = new Set(voted.map(v => v.hook_id));
           filtered = filtered.filter(h => !votedSet.has(h.id));
@@ -474,22 +487,42 @@
       }
 
       filtered = filtered.slice(0, 7);
-
       voteList.innerHTML = '';
+
       filtered.forEach(h => {
         const div = document.createElement('div');
         div.className = 'hook';
 
         const textHtml = `<p style="margin:0 0 8px; font-size:16px; font-weight:bold;">${escapeHtml(h.hook_text || "")}</p>`;
-        const imgHtml = h.image_url ? `<img class="hook-img" src="${h.image_url}" alt="Hook image" />` : "";
+        const imgHtml = h.image_url ? `<img class="hook-img" loading="lazy" src="${h.image_url}" alt="Hook image" />` : "";
 
+        if (!loggedIn) {
+          div.innerHTML = `
+            ${textHtml}
+            ${imgHtml}
+            <div class="muted" style="font-size:13px; margin-top:12px;">
+              Sign in to vote and leave feedback.
+            </div>
+            <div class="right" style="margin-top:8px;">
+              <button class="btn" type="button" data-cta-signin>Sign in</button>
+            </div>
+          `;
+          div.querySelector('[data-cta-signin]')?.addEventListener('click', () => {
+            document.getElementById('signedOut')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('email')?.focus();
+          });
+          voteList.appendChild(div);
+          return;
+        }
+
+        // Logged in: full voting UI
         div.innerHTML = `
           ${textHtml}
           ${imgHtml}
 
           <div class="muted" style="font-size:13px; margin-top:12px;">Caught my attention</div>
           <div class="vote-row att">
-            ${[1,2,3,4,5].map(n => `<button class="pill" data-att="${n}">${n}</button>`).join('')}
+            ${[1,2,3,4,5].map(n => `<button class="pill" type="button" data-att="${n}">${n}</button>`).join('')}
           </div>
 
           <div class="muted" style="font-size:13px; margin-top:8px;">Mark issues (optional)</div>
@@ -503,32 +536,28 @@
           <textarea data-issue-comment placeholder="Optional comment about what didn’t work" style="margin-top:8px;"></textarea>
 
           <div style="text-align:right; margin-top:10px;">
-            <button class="btn" data-submit>Submit Vote</button>
+            <button class="btn" type="button" data-submit>Submit Vote</button>
           </div>
         `;
 
         let att = null;
-        div.querySelectorAll('[data-att]').forEach(btn=>{
-          btn.onclick = () => {
-            div.querySelectorAll('[data-att]').forEach(b=>b.classList.remove('active'));
+        div.querySelectorAll('[data-att]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            div.querySelectorAll('[data-att]').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             att = Number(btn.getAttribute('data-att'));
-          };
+          });
         });
 
-        div.querySelector('[data-submit]').onclick = async () => {
+        div.querySelector('[data-submit]')?.addEventListener('click', async () => {
           if (!att) return alert("Pick a score (1–5).");
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) { alert("Please sign in to vote."); return; }
-
-          if (h.user_id && user.id && h.user_id === user.id) {
-            alert("You can’t vote on your own hook.");
-            return;
-          }
+          if (h.user_id && user.id && h.user_id === user.id) { alert("You can’t vote on your own hook."); return; }
 
           const p = await ensureProfileRow(user.id);
           if (!p.industry && !p.experience_level) {
-            setTimeout(()=>alert("Tip: add your industry and experience (optional) to make your feedback more useful."), 0);
+            setTimeout(() => alert("Tip: add your industry and experience (optional) to make your feedback more useful."), 0);
           }
 
           const { data: existing, error: existErr } = await supabase
@@ -537,12 +566,9 @@
             .eq('hook_id', h.id)
             .eq('voter_id', user.id)
             .maybeSingle();
-          if (existing && !existErr) {
-            alert("You have already voted on this hook.");
-            return;
-          }
+          if (existing && !existErr) { alert("You have already voted on this hook."); return; }
 
-          let ins = await supabase.from('votes').insert({
+          const ins = await supabase.from('votes').insert({
             hook_id: h.id,
             voter_id: user.id,
             vote_value: att
@@ -550,16 +576,13 @@
 
           if (ins.error) {
             const msg = String(ins.error.message || "");
-            if (msg.includes("duplicate") || msg.includes("unique")) {
-              alert("You have already voted on this hook.");
-            } else {
-              alert(msg);
-            }
+            if (msg.includes("duplicate") || msg.includes("unique")) alert("You have already voted on this hook.");
+            else alert(msg);
             return;
           }
 
           const vId = ins.data?.id;
-          const selected = Array.from(div.querySelectorAll('[data-issue]:checked')).map(el=>el.getAttribute('data-issue'));
+          const selected = Array.from(div.querySelectorAll('[data-issue]:checked')).map(el => el.getAttribute('data-issue'));
           const comment = (div.querySelector('[data-issue-comment]')?.value || '').trim();
           if ((selected.length || comment) && vId) {
             try {
@@ -570,12 +593,12 @@
                 reasons: selected,
                 comment
               });
-            } catch(e) {}
+            } catch (e) {}
           }
 
           div.remove();
           loadYourHooks();
-        };
+        });
 
         voteList.appendChild(div);
       });
