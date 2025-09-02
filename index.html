@@ -1,573 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>TestMyHook</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TestMyHook – Get feedback before you post</title>
   <style>
-    :root { --bg:#fafafa; --card:#fff; --ink:#222; --muted:#666; --brand:#ff9f43; --line:#eee; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--ink); }
-    header { padding:28px 22px 8px; max-width:1100px; margin:0 auto; }
-    h1 { margin:0 0 6px; font-size:28px; }
-    p.lead { margin:8px 0 0; color:var(--muted); }
-
-    .grid { display:grid; grid-template-columns: 1fr 340px; gap:22px; max-width:1100px; margin:0 auto; padding:18px 22px 40px; }
-    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; overflow:hidden; }
-    .stack > * { margin-bottom:12px; }
-    .stack > *:last-child { margin-bottom:0; }
-
-    .vstack-lg > * { margin-bottom:0px; }
-    #signedOut input { margin-bottom:6px; } /* extra space between email & password */
-
-    textarea, input[type="email"], input[type="password"], input[type="text"], select {
-      width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:10px; padding:12px 14px; font-size:15px;
+    :root{
+      --bg:#f7f7fb; --ink:#1f1f1f; --muted:#5b5b5b; --line:#e8e8ee;
+      --brand:#ff9f43; --brand-dark:#e07c1c; --accent:#5b7cff;
     }
-    input[type="file"] { font-size:14px; }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg)}
 
-    .muted { color:var(--muted); font-size:14px; }
-    .row { display:flex; gap:10px; align-items:center; }
-    .row > * { flex:1; }
-    .btn { background:var(--brand); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer; }
-    .btn:disabled { opacity:.6; cursor:default; }
-    .right { text-align:right; }
+    /* diagonal gradient stripe for character */
+    .stripe{
+      position:fixed; inset:-20% -20% auto -20%;
+      height:46vh; z-index:-1;
+      background:linear-gradient(105deg, #fff, #fff 40%, #f0f3ff 60%, #faf5ef 100%);
+      transform:skewY(-2deg);
+      box-shadow:0 12px 30px rgba(0,0,0,.06) inset;
+    }
 
-    .hook-card { border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; background:#fff; }
-    .hook-img { width:100%; height:auto; border-radius:10px; border:1px solid #eee; margin-top:8px; display:block; }
+    .hero{
+      max-width:1120px; margin:0 auto; padding:64px 20px 88px;
+      display:flex; gap:48px; align-items:center; flex-wrap:wrap;
+    }
 
-    .small { font-size:12px; color:var(--muted); }
-    .center { text-align:center; }
-    .invis { display:none; }
+    /* Left: image card */
+    .card{
+      flex:1 1 420px; max-width:520px;
+      background:#fff; border:1px solid var(--line); border-radius:22px;
+      box-shadow:0 14px 28px rgba(20,25,40,.08);
+      padding:16px;
+    }
+    .shot{width:100%; display:block; border-radius:14px; border:1px solid #eee}
 
-    .hook { border:1px solid var(--line); border-radius:12px; padding:12px; margin:10px 0; background:#fff; }
-    .pill { border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 10px; font-size:14px; cursor:pointer; margin-right:6px; }
-    .pill.active { background: var(--brand); border-color: var(--brand); color:#000; }
-    .vote-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    label.chk { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; cursor:pointer; }
-    label.chk input { accent-color: var(--brand); }
+    /* single-metric footer under the image */
+    .metric{
+      margin-top:12px; border:1px dashed #e2e2ee; background:#fcfcff;
+      border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:12px;
+    }
+    .metric .label{font-size:13px; color:#6b6b6b; letter-spacing:.02em; text-transform:uppercase}
+    .dots{display:flex; gap:6px}
+    .dot{width:9px; height:9px; border-radius:50%; background:#e0e2ef}
+    .dot.on{background:linear-gradient(180deg, var(--accent), #8aa0ff)}
 
-    @media (max-width: 980px) {
-  .grid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "aside"
-      "main";
-  }
-  main { grid-area: main; }
-  aside { grid-area: aside; }
-}
+    /* Right: copy */
+    .copy{flex:1 1 420px; max-width:540px}
+    h1{font-size:40px; line-height:1.08; margin:0 0 10px}
+    .tag{color:var(--muted); font-size:18px; line-height:1.55; margin:10px 0 26px}
+
+    .bullets{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 22px}
+    .chip{background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:14px}
+
+    .cta{
+      display:inline-block; padding:14px 26px; border-radius:12px; text-decoration:none; color:#000; font-weight:800;
+      background:linear-gradient(90deg, var(--brand), var(--brand-dark));
+      box-shadow:0 8px 18px rgba(224,124,28,.25);
+    }
+    .cta:active{transform:translateY(1px)}
+    .secondary{display:inline-block; margin-left:14px; color:#505050; text-decoration:none; font-weight:600}
+    .secondary:hover{text-decoration:underline}
+
+    .trust{display:flex; gap:14px; flex-wrap:wrap; margin-top:18px; color:#444; font-size:14px}
+    .trust > span{background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px 10px}
+
+    @media (max-width:860px){
+      h1{font-size:34px}
+      .hero{gap:28px; padding:40px 16px 72px}
+      .secondary{display:block; margin:10px 0 0}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>TestMyHook</h1>
-    <p class="lead">
-      Submit anonymous hooks, get quick anonymous feedback.
-      <br /><span class="small">A “hook” is a short, punchy opening line for any text (e.g. LinkedIn post, email).</span>
-    </p>
-  </header>
+  <div class="stripe" aria-hidden="true"></div>
 
-  <div class="grid">
-    <main class="stack">
-      <!-- Submit a new hook -->
-      <section class="card">
-        <div class="stack">
-          <h3 style="margin:0">Submit a new hook</h3>
-          <div id="authMsg" class="muted" style="display:none;">Sign in to submit hooks.</div>
-
-          <textarea id="hookText" rows="3" placeholder="Write your hook here..." style="margin-top:6px;" maxlength="280"></textarea>
-
-          <div class="stack" style="margin-bottom:0px">
-            <label for="hookImage">Add image (optional)</label>
-            <input id="hookImage" type="file" accept="image/*" />
-            <img id="imagePreview" class="hook-img invis" alt="Image preview" />
-          </div>
-
-          <div class="right">
-            <button id="submitHookBtn" class="btn">Submit hook</button>
-          </div>
+  <section class="hero">
+    <!-- Left: Image card -->
+    <div class="card">
+      <img src="Example.jpeg" alt="Example feedback preview" class="shot" />
+      <div class="metric" aria-hidden="true">
+        <span class="label">Attention (1–5)</span>
+        <div class="dots">
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot on"></span>
+          <span class="dot"></span>
         </div>
-      </section>
-
-      <!-- Vote on hooks -->
-      <section class="card">
-        <div class="stack">
-          <h3 style="margin:0">Vote on hooks</h3>
-          <div id="browseMsg" class="small">You can browse without signing in. Sign in to vote.</div>
-          <div id="voteList" class="muted" style="margin-top:8px;">Loading…</div>
-          <div class="right"><button id="refreshVoteBtn" class="btn" type="button">Refresh</button></div>
-        </div>
-      </section>
-    </main>
-
-    <aside class="stack">
-      <!-- Account -->
-      <section class="card">
-        <div class="vstack-lg">
-          <h3 style="margin:0">Account</h3>
-	<br>
-          <div id="signedOut">
-            <input id="email" type="email" placeholder="Email" />
-            <input id="password" type="password" placeholder="Password" style="margin-bottom:12px;" /> 
-            <div class="row">
-              <button id="signInBtn" class="btn">Sign in</button>
-              <button id="signUpBtn" class="btn">Sign up</button>
-            </div>
-          </div>
-          <div id="signedIn" class="invis">
-            <div class="row" style="justify-content:space-between;">
-              <div class="small">Signed in as <span id="userEmail"></span></div>
-              <button id="signOutBtn" class="btn" style="flex:0">Sign out</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Profile -->
-      <section id="profileSection" class="card invis">
-        <div class="stack">
-          <h3 style="margin:0">Profile</h3>
-          <input id="industry" type="text" style="margin-top:6px;" placeholder="Industry (optional)" />
-          <select id="experience">
-            <option value="">Experience level (optional)</option>
-            <option value="Junior">Junior</option>
-            <option value="Mid">Mid</option>
-            <option value="Senior">Senior</option>
-            <option value="Executive">Executive</option>
-          </select>
-          <button id="saveProfileBtn" class="btn">Save profile</button>
-        </div>
-      </section>
-
-      <!-- Your hooks -->
-      <section id="yourHooksSection" class="card invis">
-        <div class="stack">
-          <h3 style="margin:0">Your hooks</h3>
-          <div id="yourHooks" class="muted">Loading…</div>
-        </div>
-      </section>
-    </aside>
-  </div>
-
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-    const SUPABASE_URL = "https://jsjejnosdxaedrakyfks.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpzamVqbm9zZHhhZWRyYWt5ZmtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1MTQ1NTksImV4cCI6MjA3MTA5MDU1OX0.J9sWBaNB4EFdNK3-gpzJwgAde335hc9zfAMmrjllU5Y";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const authMsg = document.getElementById("authMsg");
-    const browseMsg = document.getElementById("browseMsg");
-    const submitHookBtn = document.getElementById("submitHookBtn");
-    const hookText = document.getElementById("hookText");
-    const hookImage = document.getElementById("hookImage");
-    const imagePreview = document.getElementById("imagePreview");
-
-    const voteList = document.getElementById("voteList");
-    const refreshVoteBtn = document.getElementById("refreshVoteBtn");
-
-    const signedOut = document.getElementById("signedOut");
-    const signedIn = document.getElementById("signedIn");
-    const userEmail = document.getElementById("userEmail");
-    const signInBtn = document.getElementById("signInBtn");
-    const signUpBtn = document.getElementById("signUpBtn");
-    const signOutBtn = document.getElementById("signOutBtn");
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-
-    const industryEl = document.getElementById("industry");
-    const levelEl = document.getElementById("experience");
-    const saveProfileBtn = document.getElementById("saveProfileBtn");
-    const profileSection = document.getElementById("profileSection");
-
-    const yourHooks = document.getElementById("yourHooks");
-    const yourHooksSection = document.getElementById("yourHooksSection");
-
-    function setPreview(file) {
-      if (!file) { imagePreview.classList.add("invis"); imagePreview.src = ""; return; }
-      const url = URL.createObjectURL(file);
-      imagePreview.src = url;
-      imagePreview.classList.remove("invis");
-    }
-
-    function escapeHtml(str="") {
-      return str.replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;","&quot;":"&quot;","'":"&#039;",">":"&gt;" }[m]));
-    }
-
-    async function getProfile(userId) {
-      if (!userId) return null;
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
-      if (error) return null;
-      return data;
-    }
-
-    async function ensureProfileRow(userId) {
-      const p = await getProfile(userId);
-      if (!p) await supabase.from("profiles").upsert([{ id: userId }]);
-      return p || { id: userId, industry: null, experience_level: null };
-    }
-
-    async function refreshAuthUI() {
-      const { data: { user } } = await supabase.auth.getUser();
-      const loggedIn = !!user;
-
-      signedOut.style.display = loggedIn ? "none" : "block";
-      signedIn.classList.toggle("invis", !loggedIn);
-      authMsg.style.display = loggedIn ? "none" : "block";
-      browseMsg.style.display = loggedIn ? "none" : "block";
-      userEmail.textContent = loggedIn ? user.email : "";
-
-      profileSection.classList.toggle("invis", !loggedIn);
-      yourHooksSection.classList.toggle("invis", !loggedIn);
-
-      if (loggedIn) {
-        const p = await ensureProfileRow(user.id);
-        industryEl.value = p?.industry ?? "";
-        levelEl.value = p?.experience_level ?? "";
-        loadYourHooks();
-      } else {
-        industryEl.value = "";
-        levelEl.value = "";
-        yourHooks.innerHTML = "";
-      }
-    }
-
-    signInBtn.onclick = async () => {
-      const { error } = await supabase.auth.signInWithPassword({ email: email.value.trim(), password: password.value });
-      if (error) alert(error.message);
-    };
-
-    signUpBtn.onclick = async () => {
-      const e = email.value.trim();
-      const p = password.value;
-      const { error } = await supabase.auth.signUp({ email: e, password: p });
-      if (error) {
-        if (String(error.message || "").toLowerCase().includes("database error saving new user")) {
-          const { error: otpErr } = await supabase.auth.signInWithOtp({ email: e, options: { emailRedirectTo: location.origin } });
-          if (otpErr) alert(`Sign up failed: ${otpErr.message || "unknown error"}`);
-          else alert("We sent you a sign-in link to finish creating your account. Please check your email.");
-        } else {
-          alert(error.message);
-        }
-      } else {
-        alert("Sign up successful.");
-      }
-    };
-
-    signOutBtn.onclick = async () => { await supabase.auth.signOut(); };
-
-    saveProfileBtn.onclick = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { alert("Sign in to save your profile."); return; }
-      const payload = { id: user.id, industry: industryEl.value || null, experience_level: levelEl.value || null };
-      const { error } = await supabase.from("profiles").upsert(payload);
-      if (error) alert(error.message); else alert("Profile saved.");
-    };
-
-    hookImage.addEventListener("change", (e) => setPreview(e.target.files?.[0]));
-
-    submitHookBtn.onclick = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { alert("Please sign in."); return; }
-      const text = hookText.value.trim();
-      if (!text) { alert("Please write a hook."); return; }
-
-      let image_url = null;
-      const file = hookImage.files?.[0];
-      if (file) {
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("hook-images").upload(path, file, { upsert:false, cacheControl: "3600", contentType: file.type });
-        if (upErr) { alert("Image upload failed: " + upErr.message); return; }
-        const { data: pub } = supabase.storage.from("hook-images").getPublicUrl(path);
-        image_url = pub.publicUrl;
-      }
-
-      const { error } = await supabase.from("hooks").insert({ user_id: user.id, hook_text: text, image_url });
-      if (error) { alert(error.message); return; }
-
-      hookText.value = ""; hookImage.value = ""; setPreview(null);
-      await loadYourHooks();
-      await reloadVoteList();
-      alert("Hook submitted!");
-    };
-
-    async function loadYourHooks() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: hooks, error } = await supabase
-        .from("hooks")
-        .select("id, user_id, hook_text, image_url")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending:false })
-        .limit(50);
-
-      let stats = [];
-      try {
-        const resp = await supabase.from("hook_stats").select("*").in("hook_id", (hooks || []).map(h=>h.id));
-        stats = resp.data || [];
-      } catch (e) {}
-
-      if (error) { yourHooks.innerHTML = `<div class="muted">${error.message}</div>`; return; }
-      const statMap = new Map((stats||[]).map(row => [row.hook_id, row]));
-      if (!hooks?.length) { yourHooks.innerHTML = `<div class="muted">No hooks yet.</div>`; return; }
-
-      yourHooks.innerHTML = '';
-      hooks.forEach(h => {
-        const s = statMap.get(h.id) || {};
-        const avg = (s.avg_attention ?? s.avg_score);
-        const att = avg == null ? '—' : Number(avg).toFixed(2);
-        const cnt = (s.votes_count ?? s.vote_count ?? 0);
-
-        const div = document.createElement('div');
-        div.className = 'hook';
-        div.innerHTML = `
-          <p style="margin:0 0 6px;">${escapeHtml(h.hook_text || "")}</p>
-          ${h.image_url ? `<img class="hook-img" src="${h.image_url}" alt="Hook image"/>` : ""}
-          <div class="muted" style="font-size:13px;">
-            Attention: <b>${att}</b> · (${cnt} vote${cnt === 1 ? '' : 's'})
-            ${cnt > 0 ? ` · <button class="btn" data-more style="background:none;border:none;color:var(--ink);padding:0;font-size:13px;cursor:pointer;">View more</button>` : ""}
-          </div>
-          <div class="muted" data-voter-details style="display:none; font-size:13px; margin-top:6px;"></div>
-          <button class="btn" data-delete style="background:none;border:none;color:var(--ink);padding:0;font-size:13px;cursor:pointer;">Delete</button>
-        `;
-        yourHooks.appendChild(div);
-
-        div.querySelector('[data-delete]').onclick = async () => {
-          if (!confirm('Delete this hook? This cannot be undone.')) return;
-          const { error: dErr } = await supabase.from('hooks').delete().eq('id', h.id).eq('user_id', user.id);
-          if (dErr) { alert(dErr.message); return; }
-          loadYourHooks();
-        };
-
-        if (cnt > 0) {
-          const detailsEl = div.querySelector('[data-voter-details]');
-          const btn = div.querySelector('[data-more]');
-          let cached = null;
-
-          async function fetchDetails(hookId) {
-            try {
-              const { data, error } = await supabase.rpc('get_author_hook_details', { p_hook_id: hookId });
-              if (!error && data) return data;
-            } catch (e) {}
-            try {
-              const [bd, is] = await Promise.all([
-                supabase.rpc('get_hook_voter_breakdown', { p_hook_id: hookId }),
-                supabase.rpc('get_hook_issue_summary', { p_hook_id: hookId })
-              ]);
-              if (!bd.error || !is.error) {
-                return {
-                  by_level: (bd.data || []).filter(r=>r.section==='level').map(r=>({label:r.label, votes:r.votes, avg_attention:r.avg_attention ?? r.avg_overall})),
-                  by_industry: (bd.data || []).filter(r=>r.section==='industry').map(r=>({label:r.label, votes:r.votes, avg_attention:r.avg_attention ?? r.avg_overall})),
-                  top_reasons: (is.data?.top_reasons || []),
-                  latest_comments: (is.data?.latest_comments || []),
-                  votes_count: cnt,
-                  avg_attention: avg
-                };
-              }
-            } catch (e) {}
-            return null;
-          }
-
-          if (btn) {
-            btn.onclick = async () => {
-              if (detailsEl.style.display === 'none') {
-                detailsEl.style.display = 'block';
-                detailsEl.textContent = "Loading…";
-                if (!cached) cached = await fetchDetails(h.id);
-
-                if (!cached) {
-                  detailsEl.innerHTML = "No details available yet.";
-                  btn.textContent = "Hide details";
-                  return;
-                }
-
-                const lvl = (cached.by_level || []).map(r =>
-                  `${escapeHtml(r.label)} <b>${(r.avg_attention != null ? Number(r.avg_attention).toFixed(1) : '—')}</b> (${r.votes})`
-                ).join(' · ') || '—';
-
-                const ind = (cached.by_industry || []).map(r =>
-                  `${escapeHtml(r.label)} (${r.votes})`
-                ).join(' · ') || '—';
-
-                const top = (cached.top_reasons || []).map(x =>
-                  `${escapeHtml(x.reason)} (${x.count})`
-                ).join(' · ') || '—';
-
-                const latest = (cached.latest_comments || []).map(c =>
-                  `"${escapeHtml(c.comment || '')}"`
-                ).join(' · ') || '—';
-
-                detailsEl.innerHTML =
-                  `<div><b>By level:</b> ${lvl}</div>
-                   <div style="margin-top:4px;"><b>Top industries:</b> ${ind}</div>
-                   <div style="margin-top:6px;"><b>Top issues:</b> ${top}</div>
-                   <div style="margin-top:4px;"><b>Latest comments:</b> ${latest}</div>`;
-                btn.textContent = "Hide details";
-              } else {
-                detailsEl.style.display = 'none';
-                btn.textContent = "View more";
-              }
-            };
-          }
-        }
-      });
-    }
-
-    async function reloadVoteList() {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      const { data: rows, error } = await supabase
-        .from('hooks')
-        .select('id, user_id, hook_text, image_url')
-        .order('created_at', { ascending:false })
-        .limit(100);
-      if (error) { voteList.innerHTML = `<div class="muted">${escapeHtml(error.message)}</div>`; return; }
-
-      let filtered = rows || [];
-
-      if (user) {
-        filtered = filtered.filter(h => h.user_id !== user.id);
-
-        const { data: voted, error: vErr } = await supabase
-          .from('votes')
-          .select('hook_id')
-          .eq('voter_id', user.id);
-        if (!vErr && voted) {
-          const votedSet = new Set(voted.map(v => v.hook_id));
-          filtered = filtered.filter(h => !votedSet.has(h.id));
-        }
-      }
-
-      filtered = filtered.slice(0, 7);
-
-      voteList.innerHTML = '';
-      filtered.forEach(h => {
-        const div = document.createElement('div');
-        div.className = 'hook';
-
-        const textHtml = `<p style="margin:0 0 8px; font-size:16px; font-weight:bold;">${escapeHtml(h.hook_text || "")}</p>`;
-        const imgHtml = h.image_url ? `<img class="hook-img" src="${h.image_url}" alt="Hook image" />` : "";
-
-        div.innerHTML = `
-          ${textHtml}
-          ${imgHtml}
-
-          <div class="muted" style="font-size:13px; margin-top:12px;">Caught my attention</div>
-          <div class="vote-row att">
-            ${[1,2,3,4,5].map(n => `<button class="pill" data-att="${n}">${n}</button>`).join('')}
-          </div>
-
-          <div class="muted" style="font-size:13px; margin-top:8px;">Mark issues (optional)</div>
-          <div class="vote-row">
-            ${['too_long','unclear','generic','clickbait','grammar','irrelevant'].map(key => `
-              <label class="chk">
-                <input type="checkbox" data-issue="${key}" />
-                <span style="text-transform:capitalize; font-size:13px;">${key.replace('_',' ')}</span>
-              </label>`).join('')}
-          </div>
-          <textarea data-issue-comment placeholder="Optional comment about what didn’t work" style="margin-top:8px;"></textarea>
-
-          <div style="text-align:right; margin-top:10px;">
-            <button class="btn" data-submit>Submit Vote</button>
-          </div>
-        `;
-
-        let att = null;
-        div.querySelectorAll('[data-att]').forEach(btn=>{
-          btn.onclick = () => {
-            div.querySelectorAll('[data-att]').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            att = Number(btn.getAttribute('data-att'));
-          };
-        });
-
-        div.querySelector('[data-submit]').onclick = async () => {
-          if (!att) return alert("Pick a score (1–5).");
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) { alert("Please sign in to vote."); return; }
-
-          if (h.user_id && user.id && h.user_id === user.id) {
-            alert("You can’t vote on your own hook.");
-            return;
-          }
-
-          const p = await ensureProfileRow(user.id);
-          if (!p.industry && !p.experience_level) {
-            setTimeout(()=>alert("Tip: add your industry and experience (optional) to make your feedback more useful."), 0);
-          }
-
-          const { data: existing, error: existErr } = await supabase
-            .from('votes')
-            .select('id')
-            .eq('hook_id', h.id)
-            .eq('voter_id', user.id)
-            .maybeSingle();
-          if (existing && !existErr) {
-            alert("You have already voted on this hook.");
-            return;
-          }
-
-          let ins = await supabase.from('votes').insert({
-            hook_id: h.id,
-            voter_id: user.id,
-            vote_value: att
-          }).select('id').single();
-
-          if (ins.error) {
-            const msg = String(ins.error.message || "");
-            if (msg.includes("duplicate") || msg.includes("unique")) {
-              alert("You have already voted on this hook.");
-            } else {
-              alert(msg);
-            }
-            return;
-          }
-
-          const vId = ins.data?.id;
-          const selected = Array.from(div.querySelectorAll('[data-issue]:checked')).map(el=>el.getAttribute('data-issue'));
-          const comment = (div.querySelector('[data-issue-comment]')?.value || '').trim();
-          if ((selected.length || comment) && vId) {
-            try {
-              await supabase.from('vote_issues').insert({
-                vote_id: vId,
-                hook_id: h.id,
-                user_id: user.id,
-                reasons: selected,
-                comment
-              });
-            } catch(e) {}
-          }
-
-          div.remove();
-          loadYourHooks();
-        };
-
-        voteList.appendChild(div);
-      });
-
-      if (!filtered.length) {
-        voteList.innerHTML = '<div class="muted">No new hooks to review right now.</div>';
-      }
-    }
-
-    // --- BOOT: no top-level await (so the page never “freezes”) ---
-    supabase.auth.onAuthStateChange((_event, _session) => {
-      refreshAuthUI().catch(console.error);
-      reloadVoteList().catch(console.error);
-    });
-
-    // Kick off without blocking the module
-    refreshAuthUI().catch(() => showOffline());
-    reloadVoteList().catch(() => showOffline());
-
-    function showOffline() {
-      const el = document.getElementById('voteList');
-      if (el && !el.dataset.offline) {
-        el.dataset.offline = "1";
-        el.innerHTML = '<div class="muted">Can’t reach the server right now. Try Refresh in a bit.</div>';
-      }
-    }
-  </script>
+      </div>
+    </div>
+
+    <!-- Right: Headline & CTAs -->
+    <div class="copy">
+      <h1>Find out if your LinkedIn opener actually works. Before you post.</h1>
+      <p class="tag">
+        Submit your opening line and get quick, anonymous 1–5 attention scores from real people.
+        Improve the hook before it goes live.
+      </p>
+
+      <div class="bullets">
+        <span class="chip">For posts & DMs</span>
+        <span class="chip">Fast feedback</span>
+        <span class="chip">Anonymous votes</span>
+      </div>
+
+      <a class="cta" href="app.html">Test My Hook</a>
+      <a class="secondary" href="app.html#rate">Or start rating hooks</a>
+
+      <div class="trust">
+        <span>✅ Free to try</span>
+        <span>🕒 Results in minutes</span>
+        <span>🔒 No account required to browse</span>
+      </div>
+    </div>
+  </section>
 </body>
 </html>
