@@ -30,6 +30,7 @@
       background:#fff; border:1px solid var(--line); border-radius:22px;
       box-shadow:0 14px 28px rgba(20,25,40,.08);
       padding:20px;
+      overflow:hidden;              /* NEW: clip to rounded corners */
     }
     .shot{width:100%; display:block; border-radius:14px; border:1px solid #eee}
 
@@ -62,6 +63,7 @@
     .trust{display:flex; gap:18px; flex-wrap:wrap; margin-top:32px; color:#444; font-size:15px}
     .trust > span{background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 14px}
 
+    /* MOBILE TWEAKS */
     @media (max-width:860px){
       .hero{gap:40px; padding:60px 20px 80px; flex-direction:column; text-align:center}
       .copy{max-width:100%}
@@ -70,10 +72,15 @@
       .bullets{justify-content:center; margin-bottom:28px}
       .trust{justify-content:center; margin-top:28px}
 
-      /* NEW: limit hero screenshot height on mobile */
+      /* NEW: reduce card padding so the white “border” looks smaller */
+      .card{padding:14px}
+
+      /* NEW: keep screenshot visible & not too tall */
       .shot{
-        height: 240px;       /* adjust to taste */
-        object-fit: cover;   /* crops instead of squishing */
+        height: clamp(190px, 52vw, 260px);  /* responsive cap */
+        object-fit: cover;                   /* crop instead of squish */
+        object-position: top center;         /* show the top of the image */
+        border-radius:12px;                  /* matches tighter padding */
       }
     }
   </style>
