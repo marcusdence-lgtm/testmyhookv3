@@ -5,57 +5,88 @@
   <title>TestMyHook</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { --bg:#fafafa; --card:#fff; --ink:#222; --muted:#666; --brand:#ff9f43; --line:#eee; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--ink); }
-    header { padding:28px 22px 8px; max-width:1100px; margin:0 auto; }
-    h1 { margin:0 0 6px; font-size:28px; }
-    p.lead { margin:8px 0 0; color:var(--muted); }
+  html, body { overflow-x: hidden; }
 
-    .grid { display:grid; grid-template-columns: 1fr 340px; gap:22px; max-width:1100px; margin:0 auto; padding:18px 22px 40px; }
-    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; overflow:hidden; }
-    .stack > * { margin-bottom:12px; }
-    .stack > *:last-child { margin-bottom:0; }
+  img, textarea, input, select, button { max-width: 100%; }
 
-    .vstack-lg > * { margin-bottom:0px; }
-    #signedOut input { margin-bottom:6px; } /* extra space between email & password */
-
-    textarea, input[type="email"], input[type="password"], input[type="text"], select {
-      width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:10px; padding:12px 14px; font-size:15px;
-    }
-    input[type="file"] { font-size:14px; }
-
-    .muted { color:var(--muted); font-size:14px; }
-    .row { display:flex; gap:10px; align-items:center; }
-    .row > * { flex:1; }
-    .btn { background:var(--brand); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer; }
-    .btn:disabled { opacity:.6; cursor:default; }
-    .right { text-align:right; }
-
-    .hook-card { border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; background:#fff; }
-    .hook-img { width:100%; height:auto; border-radius:10px; border:1px solid #eee; margin-top:8px; display:block; }
-
-    .small { font-size:12px; color:var(--muted); }
-    .center { text-align:center; }
-    .invis { display:none; }
-
-    .hook { border:1px solid var(--line); border-radius:12px; padding:12px; margin:10px 0; background:#fff; }
-    .pill { border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 10px; font-size:14px; cursor:pointer; margin-right:6px; }
-    .pill.active { background: var(--brand); border-color: var(--brand); color:#000; }
-    .vote-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    label.chk { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; cursor:pointer; }
-    label.chk input { accent-color: var(--brand); }
-
-    @media (max-width: 980px) {
-  .grid {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "aside"
-      "main";
-  }
-  main { grid-area: main; }
-  aside { grid-area: aside; }
+  :root { --bg:#fafafa; --card:#fff; --ink:#222; --muted:#666; --brand:#ff9f43; --line:#eee; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--ink); }
+  header {
+  padding: 28px 22px 8px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box; /* keeps header aligned with .grid */
 }
-  </style>
+
+  h1 { margin:0 0 6px; font-size:28px; }
+  p.lead { margin:8px 0 0; color:var(--muted); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+    width: 100%;
+    max-width: 1100px;   /* match header */
+    margin: 0 auto;
+    padding: 18px 22px 40px;
+    box-sizing: border-box;
+  }
+
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px; overflow:hidden; }
+  .stack > * { margin-bottom:12px; }
+  .stack > *:last-child { margin-bottom:0; }
+
+  .vstack-lg > * { margin-bottom:0px; }
+  #signedOut input { margin-bottom:6px; }
+
+  textarea, input[type="email"], input[type="password"], input[type="text"], select {
+    width:100%; box-sizing:border-box; border:1px solid #ddd; border-radius:10px; padding:12px 14px; font-size:15px;
+  }
+  input[type="file"] { font-size:14px; }
+
+  .muted { color:var(--muted); font-size:14px; }
+  .row { display:flex; gap:10px; align-items:center; }
+  .row > * { flex:1; }
+  .btn { background:var(--brand); color:#000; border:0; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer; }
+  .btn:disabled { opacity:.6; cursor:default; }
+  .right { text-align:right; }
+
+  .hook-card { border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; background:#fff; }
+  .hook-img { width:100%; height:auto; border-radius:10px; border:1px solid #eee; margin-top:8px; display:block; }
+
+  .small { font-size:12px; color:var(--muted); }
+  .center { text-align:center; }
+  .invis { display:none; }
+
+  .hook { border:1px solid var(--line); border-radius:12px; padding:12px; margin:10px 0; background:#fff; }
+  .pill { border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 10px; font-size:14px; cursor:pointer; margin-right:6px; }
+  .pill.active { background: var(--brand); border-color: var(--brand); color:#000; }
+  .vote-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  label.chk { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; cursor:pointer; }
+  label.chk input { accent-color: var(--brand); }
+
+  /* Stack layout on tablets/phones */
+  @media (max-width: 980px) {
+    .grid {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "aside"
+        "main";
+    }
+    main { grid-area: main; }
+    aside { grid-area: aside; }
+  }
+
+  /* Match header/grid gutters on small phones */
+  @media (max-width: 480px) {
+    header, .grid {
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+  }
+</style>
+
 </head>
 <body>
   <header>
@@ -104,8 +135,11 @@
       <section class="card">
         <div class="vstack-lg">
           <h3 style="margin:0">Account</h3>
-	<br>
-          <div id="signedOut">
+		<p class="small" style="margin:6px 0 12px;">
+ 		 Accounts are only used so you can revisit your hooks and see feedback later.
+		</p>
+		<div id="signedOut">
+
             <input id="email" type="email" placeholder="Email" />
             <input id="password" type="password" placeholder="Password" style="margin-bottom:12px;" /> 
             <div class="row">
