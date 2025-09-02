@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,10 +33,19 @@
     }
 
     /* Carousel */
-    .carousel{ position:relative; border-radius:14px; border:1px solid #eee; overflow:hidden; }
+    .carousel{
+      position:relative;
+      display:grid;             /* pinotaan sisältö */
+      align-items:center;
+      justify-items:center;
+      border-radius:14px; border:1px solid #eee; overflow:hidden;
+    }
     .carousel img{
-      display:none; width:100%; height:auto; object-fit:contain;
-      aspect-ratio:16 / 10;
+      display:none;             /* vain aktiivinen näkyy */
+      width:100%;
+      height:auto;              /* ei pakotettua korkeutta */
+      object-fit:contain;       /* näytä koko kuva, ei cropata */
+      aspect-ratio:auto;        /* ei pakotettua kuvasuhdetta */
     }
     .carousel img.active{ display:block; }
 
@@ -97,12 +106,13 @@
       .trust{justify-content:center; margin-top:28px}
       .card{padding:14px}
 
+      /* Tärkeimmät muutokset: kuva näkyy kokonaan, laatikko ei veny liikaa */
+      .carousel{
+        min-height:180px;   /* siisti minimi eri kuvilla */
+        max-height:70vh;    /* ei veny liian pitkäksi */
+      }
       .carousel img{
-        height: clamp(200px, 55vw, 280px);
-        width:100%;
-        object-fit: cover;
-        object-position: top center;
-        aspect-ratio:auto;
+        max-height:70vh;    /* rajoita korkeutta, mutta älä rajaa kuvaa */
       }
       .arrow{ width:32px; height:32px }
       .arrow svg{ width:14px; height:14px }
@@ -116,8 +126,8 @@
     <div class="card">
       <!-- CAROUSEL -->
       <div class="carousel" id="shotCarousel">
-        <img src="Example.jpeg"  alt="Example feedback preview" class="active">
-        <img src="Example2.jpeg" alt="Example cards and scores">
+        <img src="Example.jpeg"  alt="Example feedback preview" class="active" loading="lazy" decoding="async">
+        <img src="Example2.jpeg" alt="Example cards and scores" loading="lazy" decoding="async">
 
         <button class="arrow left" type="button" aria-label="Previous screenshot">
           <svg viewBox="0 0 24 24" fill="none"><path d="M14 6l-6 6 6 6" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
